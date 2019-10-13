@@ -1,0 +1,401 @@
+<html>
+	<head>
+		<title>Introduction to Kubernetes</title>
+		<meta charset="utf8">
+    <style>
+			@import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+			@import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+			@import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+			body { 
+				font-family: 'Ubuntu Mono'; 
+			}
+			h1, h2, h3 {
+				font-family: 'Ubuntu Mono';
+				font-weight: normal;
+			}
+			h1 {
+				color: #cb4b16;
+			}
+			.remark-slide div {
+				background-color: #002b36;
+				color: #839496;
+			}
+			.remark-inline-code {
+				color: #2aa198;
+				font-family: 'Ubuntu Mono';
+			}
+			.image-50 img {
+				width: 50%;
+			}
+			.red {
+				color: #dc322f;
+			}
+			.footnote {
+				position: absolute;
+				bottom: 3em;
+			}
+			a:link {
+				color: #859900;
+			}
+			a:visited {
+				color: #6c71c4;
+			}
+			.remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+		</style>
+	</head>
+	<body>
+		<textarea id="source">
+			# Introduction to Kubernetes
+			Charlie Snyder
+
+			
+			.footnote[[https://github.com/mjrsnyder/k8s-intro](https://github.com/mjrsnyder/k8s-intro)]
+			---
+
+			# Agenda
+
+			1. whoami
+			2. The Problem
+			3. K8s System Architecture
+			4. K8s Objects
+			5. K8s in _the Cloud_
+			6. Monitoring and Reliability
+			7. Demo/Lab
+			8. Q&A
+			---
+			class: middle, center
+			# Feel free to ask questions!
+
+			<iframe src="https://giphy.com/embed/yXVO50FJIJMSQ" width="480" height="378" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/sonic-the-hedgehog-sanic-yXVO50FJIJMSQ"></a></p>
+			---
+			# whoami
+
+			* BJU Class of 2013
+			* Majored in IT
+			* 6 years experience in IT
+				* **Sysadmin** - your disk is full
+				* **DBA** - your query is bad
+				* **DevOps** - your YAML is wrong
+			* Interests
+				* Computing, IoT, microcontrollers
+				* Kayaking, camping, hiking
+				* PC Gaming
+				* Aquariums/fish keeping
+				* Woodworking
+			* Contact Info
+				* Email - mjrsnyder@gmail.com
+				* Twitter - @MJRSnyder
+				* GitHub - (https://github.com/mjrsnyder)
+				* [blog](http://blog.dozeops.com) I haven't touched since 2016
+			
+			---
+			# The Problem(s)
+
+			--
+			1. Does it scale?
+				* Pets vs Cattle
+				* Dynamic scaling
+				* Config drift
+				* How does your team scale?
+	
+			---
+			# Scale?
+
+			.center.image-50[![Blog on K8s](./images/blog-on-kubernetes.png)]
+			---
+			# The Problem(s)
+			
+			1. Does it scale?
+			2. Is it portable? - Write once run anywhere
+			3. How do I deploy?
+			4. How do I monitor my app?
+			5. Where are my logs?
+			6. Is my app performing well?
+			---
+			# Kubernetes
+			or k8s (`k` eight letters then `s`)
+			* "Kubernetes" is Greek for governor, helmsman, captain.
+			* Open-Source system for automating deployment, scaling and management of containerized applications
+			* Nautical themed ecosystem
+				* `Raft` - networking
+				* `Helm` - template engine on top of k8s (yo dawg I heard you like yaml)
+				* `Harbor` - container registry
+				* `Rudr` - A kuternetes implementation of the Open Aplication Model
+			---
+			# K8s System Architecture
+
+			--
+			* Master nodes (prod *_requires_* a quorum)
+				* `kubelet`
+				* `kube-apiserver`
+				* `kube-proxy`
+				* `kube-controller-manager`
+				* `etcd`
+				* `cloud-controller-manager`
+				* other abstraction tools
+				* probably *not* your app
+			
+			--
+			* Worker nodes (scales up to whatever you need)
+				* `kubelet`
+				* `kube-proxy`
+				* other logging and monitoring tools
+
+			--
+				* .red[**your app!**]
+			---
+			# `kubectl`
+			* "kubernetes control" (can be pronounced _kube cuddle_ or _kube c t l_)
+			* common actions
+				* `get`
+				* `apply`
+				* `exec`
+				* `port-forward`
+				* `describe`
+			---
+			# Objects
+			* Managed by `kube-apiserver`
+			* State stored in `etcd`
+			* expressed in YAML or JSON (but mostly YAML)
+			* required fields
+				* `apiVersion` - _generally_ backwards compatable but don't count on it
+				* `kind` - deployments, pod disruption budget, horizontal pod autoscaler
+				* `metadata` - name, labels, annotations, etc
+				* `spec` - the object you wish to manage
+			---
+			# Namespace
+			* Nearly every object belongs to a namespace
+			* Useful for logical separation of applications
+				* Use one k8s cluster for many non-prod environments
+			* Separate workloads
+				* Generally you will want to separate your app from k8s pods
+				* Monitoring and Managment tools should run in their own namespace
+			
+			---
+			# Pods - the atom of k8s
+			* one or more containers
+			* containers _always_ colocated
+			* containers in the pod share
+				* disk (ephemeral unless otherwise configured)
+				* IP
+				* Hostname
+			* CPU/Memory resource requests and limits
+				* **CRITICAL** to application stability and autoscaling
+				* Request - resource allocated exclusively to that pod
+				* Limit - maximum amount of the resource that can be consumed
+
+			---
+			# Example `pod`
+			```yaml
+			apiVersion: v1
+			kind: Pod
+			metadata:
+			  name: hello-world
+			  labels:
+			    app: hello-world
+			    version: 4.0.4
+			spec:
+			  containers:
+			    - name: hello-world
+			      image: busybox
+			      resources:
+			        requests:
+			          cpu: '100m'
+			        limits:
+			          cpu: '1000m'
+			      command: ['sh', '-c', 'echo Hello World && sleep 60']
+			    - name: hello-hostname
+			      image: busybox
+			      command: ['sh', '-c', 'echo Hello World! I am $HOSTNAME && sleep 60']
+
+			```
+			---
+			# Controllers
+			how we deploy and scale
+			* contains a template spec of the pod you wish to run
+			* dictates how to scale your pods
+			---
+			# `StatefulSet` 
+			* Fixed IP
+			* Fixed hostname
+			* Stays on the same host
+			* Ordered scaling and updates
+			* Good for stateful applications like databases, message queues, file servers, etc
+			* Examples:
+				* PostgreSQL
+				* RabbitMQ
+				* Redis
+				* Kafka
+				* NFS
+				* Poorly architected app that you've been asked to deploy
+			---
+			# `DaemonSet`
+			* Runs on every node in the cluster 
+			* Good for cluster-wide services like logging, monitoring, etc
+			* Examples:
+				* cadvisor - tool for monitoring host and container metrics
+				* fluentd - tool for capturing logs from containers (`stdout` remember the 12 factor app!)
+
+			---
+			# `Deployment`
+			* Built on `ReplicaSets`
+			* Desired State
+			* Scale
+			* Perfect for [12 Factor Apps](https://12factor.net/)
+			* Deployments
+				* Rolling
+				* Blue/Green
+				* A/B
+				* Canary
+				* Recreate
+			---
+			# Example `Deployment`
+			```yaml
+				apiVersion: apps/v1
+				kind: Deployment
+				metadata:
+					name: nginx-deployment
+					labels:
+						app: nginx
+				spec:
+				  replicas: 3
+				  selector:
+				    matchLabels:
+				      app: nginx
+				  template:
+				    metadata:
+				      labels:
+				        app: nginx
+				    spec:
+				      containers:
+				      - name: nginx
+				        image: nginx:1.7.9
+				        ports:
+				        - containerPort: 80
+				```
+			---
+			# `Services`
+			* Persistant route to one or more pods
+			* Usually uses a `Selector` to match the backend pod(s)
+			* Service discovery
+				* DNS
+				* Environment vars
+				* API
+			* `ServiceTypes`
+				* `ClusterIP` - Expose your service to internal cluster resources only
+				* `NodePort` - Expose your service on every node in the cluster
+				* `LoadBalancer` - Expose your service outside your cluster
+				* `ExternalName` - external resources
+
+			```yaml
+			apiVersion: v1
+			kind: Service
+			metadata:
+			  name: nginx-svc
+			spec:
+			  selector:
+			    app: nginx
+			  ports:
+			    - protocol: TCP
+			      port: 80
+			      targetPort: 9376
+			```
+			---
+			# `Ingress`
+			* Proxies traffic from outside the cluster to internal `ClusterIP` services
+			* Backed by an `IngressController` (usually nginx, haproxy, some other l7 proxy)
+			* SSL termination
+			* Virtual Hosting - vhosts (apache) servers (nginx)
+			```
+			foo.bar.com --|                 |-> foo.bar.com service1:80
+			                  | 178.91.123.132  |
+			bar.foo.com --|                 |-> bar.foo.com service2:80
+			```
+			* Fanout
+			```
+			foo.bar.com -> 178.91.123.132 -> / foo    service1:4200
+			  	                               / bar    service2:8080
+			```
+			---
+			# K8s in _the Cloud_
+			* Infrastructure agnostic .red[*]
+				* Bare Metal
+				* VM Cluster (vSphere, HyperV, KVM, etc)
+				* IaaS Providers (AWS, GCP, Azure, Digital Ocean, etc)
+
+			.footnote[.bottom.red[\* sorta]]
+
+			--
+			* Distros
+				* OpenShift
+				* Rancher
+				* Canonical
+
+			--
+			* K8saaS (Kubernetes as a Service)
+				* ⭐⭐⭐⭐⭐ 5/5 would recommend
+				* Offered by the major cloud providers
+				* Master nodes are managed by the provider
+				* _Usually_ you only pay for worker nodes
+				* Updates are automated
+				* Managment tooling provided
+
+
+			---
+			# Monitoring and Reliability
+			* New "Cloud Native" open-source monitoring and metrics tools
+				* Heapster - original k8s metrics collector
+				* Prometheus - correct k8s metrics collector
+			* Prometheus metrics format "standard"
+				* Libraries exist for most languages and frameworks
+				* Libraries often auto-instrument your app
+				* Libraries often don't auto-instrument your app in the way you want
+			---
+			# Reliability: Healthchecks
+			* They will save you
+
+			--
+			* They will burn you
+
+			--
+			* Attribute of a container
+			* Types
+				* liveness - is the pod alive
+				* readiness - is the pod ready to do work
+			* Check options
+				* `tcpSocket`
+				* `command`
+				* `httpGet`
+
+			---
+			# Example Healthchecks
+			```yaml
+			livenessProbe:
+			  httpGet:
+			    path: /health
+			    port: 8080
+			  failureThreshold: 1
+			  periodSeconds: 10
+			readinessProbe:
+			  exec:
+			    command:
+			    - cat
+			    - /tmp/healthy
+			  initialDelaySeconds: 5
+			  periodSeconds: 10
+			```
+
+			---
+			# Amazon EKS
+			* https://docs.aws.amazon.com/eks/latest/userguide/getting-started-console.html
+
+			</textarea>
+		<script src="https://remarkjs.com/downloads/remark-latest.min.js">
+		</script>
+	<script>
+		var slideshow = remark.create({
+			highlightStyle: 'solarized-dark'
+		});
+	</script>
+	</body>
+</html>
