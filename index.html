@@ -60,13 +60,10 @@
 			4. K8s Objects
 			5. K8s in _the Cloud_
 			6. Monitoring and Reliability
-			7. Demo/Lab
-			8. Q&A
+			8. Q&A/Lab
 			---
 			class: middle, center
 			# Feel free to ask questions!
-
-			<iframe src="https://giphy.com/embed/yXVO50FJIJMSQ" width="480" height="378" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/sonic-the-hedgehog-sanic-yXVO50FJIJMSQ"></a></p>
 			---
 			# whoami
 
@@ -120,7 +117,7 @@
 				* `Raft` - networking
 				* `Helm` - template engine on top of k8s (yo dawg I heard you like yaml)
 				* `Harbor` - container registry
-				* `Rudr` - A kuternetes implementation of the Open Aplication Model
+				* `Rudr` - A Kubernetes implementation of the Open Application Model
 			---
 			# K8s System Architecture
 
@@ -158,7 +155,7 @@
 			* State stored in `etcd`
 			* expressed in YAML or JSON (but mostly YAML)
 			* required fields
-				* `apiVersion` - _generally_ backwards compatable but don't count on it
+				* `apiVersion` - _generally_ backwards compatible but don't count on it
 				* `kind` - deployments, pod disruption budget, horizontal pod autoscaler
 				* `metadata` - name, labels, annotations, etc
 				* `spec` - the object you wish to manage
@@ -169,12 +166,12 @@
 				* Use one k8s cluster for many non-prod environments
 			* Separate workloads
 				* Generally you will want to separate your app from k8s pods
-				* Monitoring and Managment tools should run in their own namespace
+				* Monitoring and Management tools should run in their own namespace
 			
 			---
 			# Pods - the atom of k8s
 			* one or more containers
-			* containers _always_ colocated
+			* containers _always_ collocated
 			* containers in the pod share
 				* disk (ephemeral unless otherwise configured)
 				* IP
@@ -275,7 +272,7 @@
 				```
 			---
 			# `Services`
-			* Persistant route to one or more pods
+			* Persistent route to one or more pods
 			* Usually uses a `Selector` to match the backend pod(s)
 			* Service discovery
 				* DNS
@@ -338,7 +335,7 @@
 				* Master nodes are managed by the provider
 				* _Usually_ you only pay for worker nodes
 				* Updates are automated
-				* Managment tooling provided
+				* Management tooling provided
 
 
 			---
@@ -386,9 +383,21 @@
 			```
 
 			---
-			# Amazon EKS
-			* https://docs.aws.amazon.com/eks/latest/userguide/getting-started-console.html
+			# Lab
+			#### Objective: Deploy a web app to your k8s cluster
+			* Install an [ingress controller](https://docs.aws.amazon.com/eks/latest/userguide/alb-ingress.html)
+			* Things you'll need to write
+				* `deployment` spec for your app
+				* `service` spec
+				* `ingress` spec (nip.io is great for testing without waiting for DNS to replicate)
+				* CI Integration
+			* Bonus points
+				* `service` spec for your database
+				* Horizontal Pod Autoscaler
 
+
+			--
+			### Questions?
 			</textarea>
 		<script src="https://remarkjs.com/downloads/remark-latest.min.js">
 		</script>
