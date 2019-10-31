@@ -145,6 +145,7 @@
 			* "kubernetes control" (can be pronounced _kube cuddle_ or _kube c t l_)
 			* common actions
 				* `get`
+				* `edit`
 				* `apply`
 				* `exec`
 				* `port-forward`
@@ -389,12 +390,18 @@
 			* Things you'll need to write
 				* `deployment` spec for your app
 				* `service` spec
-				* `ingress` spec (nip.io is great for testing without waiting for DNS to replicate)
-				* CI Integration
-			* Bonus points
+				* `ingress` spec ([nip.io](https://nip.io) is great for testing without waiting for DNS)
+				* CI Integration - Hint [k8s_raw](https://docs.ansible.com/ansible/latest/modules/k8s_module.html#k8s-raw-module)
+
+			--
+			* Bonus points .red[*]
+				* separate namespaces for dev and prod environments
 				* `service` spec for your database
 				* Horizontal Pod Autoscaler
+				* SSL from [Let's Encrypt](https://letsencrypt.org)
 
+			--
+			.footnote[.bottom.red[\* I don't know if you'll _actually_ get bonus points]]
 
 			--
 			### Questions?
